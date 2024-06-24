@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Fullstack App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Welcome to the Simple Fullstack App</h1>
+    <button id="fetchMessage">Get Message from Backend</button>
+    <p id="message"></p>
+
+    <script>
+        document.getElementById('fetchMessage').addEventListener('click', () => {
+            fetch('/api/message')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('message').textContent = data.message;
+                });
+        });
+    </script>
+</body>
+</html>
