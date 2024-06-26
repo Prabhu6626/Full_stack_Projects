@@ -3,11 +3,14 @@ from flask_login import login_user, current_user, logout_user, login_required
 from app import app, db, login_manager, mail
 from models import User
 from flask_mail import Message
+from bson.objectid import ObjectId
 
 @login_manager.user_loader
 def load_user(user_id):
     user_data = db.users.find_one({'_id': ObjectId(user_id)})
-    return User(user_data['email'], user_data['password']) if user_data else None
+    if user_data:
+        return User(email=user_data['email'], password=user_data['password'], _id=user_data['_id'])
+    return None
 
 @app.route('/')
 def index():
@@ -33,8 +36,8 @@ def login():
         email = request.form['email']
         password = request.form['password']
         user_data = User.find_by_email(email)
-        if user_data and User.check_password(user_data['password'], password):
-            user = User(user_data['email'], user_data['password'])
+        if user_data and User.check_password(user_data.password, password):
+            user = User(email=user_data.email, password=user_data.password, _id=user_data.id)
             login_user(user)
             return redirect(url_for('dashboard'))
         else:

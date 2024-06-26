@@ -17,7 +17,7 @@ login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 mail = Mail(app)
 
-client = MongoClient('mongodb://localhost:27017/')
+client = MongoClient("mongodb://localhost:27017/")
 db = client['event_management']
 
 from routes import *
