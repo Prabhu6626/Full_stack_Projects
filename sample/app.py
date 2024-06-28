@@ -7,11 +7,13 @@ from werkzeug.security import generate_password_hash, check_password_hash
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
 
-# Configure MongoDB
+
 app.config['MONGO_URI'] = 'mongodb://localhost:27017/event_manager'
 mongo = PyMongo(app)
+events_collection = mongo.db.events
+users_collection = mongo.db.users
 
-# Routes
+
 @app.route('/')
 def index():
     events = load_events()
@@ -107,7 +109,7 @@ def attendance(event_id):
 
     return 'Event not found'
 
-# Helper functions
+
 def load_events():
     events_collection = mongo.db.events
     events = list(events_collection.find())
