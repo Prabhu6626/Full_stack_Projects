@@ -1,16 +1,14 @@
-from app import db, bcrypt
+from flask_bcrypt import Bcrypt
 from flask_login import UserMixin
-from bson.objectid import ObjectId
+from app import db
+
+bcrypt = Bcrypt()
 
 class User(UserMixin):
     def __init__(self, email, password, _id=None):
         self.email = email
-        self.password = password
-        self.id = str(_id) if _id else None
-
-    def save(self):
-        user_id = db.users.insert_one({'email': self.email, 'password': self.password}).inserted_id
-        self.id = str(user_id)
+        self.password = bcrypt.generate_password_hash(password).decode('utf-8') if isinstance(password, str) else password
+        self.id = str(_id)
 
     @staticmethod
     def find_by_email(email):
@@ -23,5 +21,10 @@ class User(UserMixin):
     def check_password(hashed_password, password):
         return bcrypt.check_password_hash(hashed_password, password)
 
-    def get_id(self):
-        return self.id
+    def save(self):
+        user_data = {
+            'email': self.email,
+            'password': self.password
+        }
+        result = db.users.insert_one(user_data)
+        self.id = str(result.inserted_id)
