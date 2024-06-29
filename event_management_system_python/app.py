@@ -1,136 +1,145 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from flask_pymongo import PyMongo
-from bson.objectid import ObjectId
-from flask_bcrypt import Bcrypt
-from flask_login import LoginManager, login_user, login_required, logout_user, current_user, UserMixin
 import json
-import os
+from bson import ObjectId
+from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your_secret_key'
-app.config["MONGO_URI"] = "mongodb://localhost:27017/event_management"
+app.secret_key = 'your_secret_key'
 
+
+app.config['MONGO_URI'] = 'mongodb://localhost:27017/event_management'
 mongo = PyMongo(app)
-bcrypt = Bcrypt(app)
-login_manager = LoginManager(app)
-login_manager.login_view = 'login'
-
-EVENTS_JSON_FILE = 'events.json'
-
-class User(UserMixin):
-    def __init__(self, id, email, password):
-        self.id = id
-        self.email = email
-        self.password = password
-
-    @staticmethod
-    def check_password(hashed_password, password):
-        return bcrypt.check_password_hash(hashed_password, password)
-
-    @staticmethod
-    def get_user(email):
-        user_data = mongo.db.users.find_one({"email": email})
-        if user_data:
-            return User(str(user_data['_id']), user_data['email'], user_data['password'])
-        return None
-
-@login_manager.user_loader
-def load_user(user_id):
-    user_data = mongo.db.users.find_one({"_id": ObjectId(user_id)})
-    if user_data:
-        return User(str(user_data['_id']), user_data['email'], user_data['password'])
-    return None
-
-def save_event_to_json(event_data):
-    if os.path.exists(EVENTS_JSON_FILE):
-        with open(EVENTS_JSON_FILE, 'r') as file:
-            events = json.load(file)
-    else:
-        events = []
-
-    events.append(event_data)
-    
-    with open(EVENTS_JSON_FILE, 'w') as file:
-        json.dump(events, file, indent=4)
-
-def read_events_from_json():
-    if os.path.exists(EVENTS_JSON_FILE):
-        with open(EVENTS_JSON_FILE, 'r') as file:
-            return json.load(file)
-    return []
+events_collection = mongo.db.events
+users_collection = mongo.db.users
 
 @app.route('/')
 def index():
-    events = list(mongo.db.events.find())
-    json_events = read_events_from_json()
-    return render_template('index.html', events=events + json_events)
+    events = load_events()
+    users = load_users()
 
-@app.route('/create_event', methods=['GET', 'POST'])
-@login_required
-def create_event():
-    if request.method == 'POST':
-        name = request.form.get('name')
-        date = request.form.get('date')
-        description = request.form.get('description')
-        tickets_available = request.form.get('tickets_available')
+    username = session.get('username')
+    print(username)
+    user_role = None
 
-        if not name or not date or not description or not tickets_available:
-            flash('Please enter all the fields', 'error')
-            return redirect(url_for('create_event'))
+    if username:
+        user = mongo.db['users'].find_one({'username': username})
+        if user:
+            user_role = user.get('role')
+           
+    print(user_role)
 
-        event_data = {
-            'name': name,
-            'date': date,
-            'description': description,
-            'tickets_available': tickets_available,
-            'created_by': current_user.id
-        }
+    return render_template('index.html', events=events, user_role=user_role, username=username)
 
-        mongo.db.events.insert_one(event_data)
-        save_event_to_json(event_data)
 
-        flash('Event created successfully!', 'success')
-        return redirect(url_for('index'))
-    return render_template('create_event.html')
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        email = request.form.get('email')
-        password = request.form.get('password')
-        hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+        users_collection = mongo.db.users
+        existing_user = users_collection.find_one({'username': request.form['username']})
 
-        user_data = {
-            'email': email,
-            'password': hashed_password
-        }
+        if existing_user is None:
+            hash_pass = generate_password_hash(request.form['password'])
+            users_collection.insert_one({
+                'username': request.form['username'],
+                'password': hash_pass,
+                'role': 'event_creator' if request.form.get('is_creator') else 'customer'
+            })
+            session['username'] = request.form['username']
+            return redirect(url_for('index'))
+        return 'That username already exists!'
 
-        mongo.db.users.insert_one(user_data)
-
-        flash('Registration successful! Please log in.', 'success')
-        return redirect(url_for('login'))
     return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        email = request.form.get('email')
-        password = request.form.get('password')
-        user = User.get_user(email)
-        
-        if user and User.check_password(user.password, password):
-            login_user(user)
-            return redirect(url_for('index'))
-        
-        flash('Invalid email or password', 'error')
-        return redirect(url_for('login'))
+        users_collection = mongo.db.users
+        login_user = users_collection.find_one({'username': request.form['username']})
+
+        if login_user:
+            if check_password_hash(login_user['password'], request.form['password']):
+                session['username'] = request.form['username']
+                return redirect(url_for('index'))
+
+        return 'Invalid username/password combination'
+
     return render_template('login.html')
 
 @app.route('/logout')
-@login_required
 def logout():
-    logout_user()
-    return redirect(url_for('login'))
+    session.pop('username', None)
+    return redirect(url_for('index'))
+
+@app.route('/create_event', methods=['GET', 'POST'])
+def create_event():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        events_collection = mongo.db.events
+        events_collection.insert_one({
+            'event_name': request.form['event_name'],
+            'event_date': request.form['event_date'],
+            'ticket_limit': int(request.form['ticket_limit']),
+            'creator': session['username'],
+            'booked_users': [] 
+        })
+        return redirect(url_for('index'))
+
+    return render_template('create_event.html')
+
+@app.route('/book_event/<event_id>', methods=['POST'])
+def book_event(event_id):
+    if 'username' not in session:
+        return jsonify({'error': 'Login required'}), 401
+
+    events_collection = mongo.db.events
+    event = events_collection.find_one({'_id': ObjectId(event_id)})
+
+    if event:
+        if event['ticket_limit'] == 0:
+            return jsonify({'Customers': 'There  is no customer yet'})
+        if event['ticket_limit'] > 0:
+            events_collection.update_one(
+                {'_id': ObjectId(event_id)},
+                {
+                    '$inc': {'ticket_limit': -1},
+                    '$push': {'booked_users': session['username']}  # Add the username to booked_users
+                }
+            )
+            return jsonify({'message': 'Ticket booked successfully'})
+        else:
+            return jsonify({'error': 'Ticket limit exceeded'}), 400
+
+    return jsonify({'error': 'Event not found'}), 404
+
+@app.route('/attendance/<event_id>')
+def attendance(event_id):
+    if 'username' not in session:
+        return redirect(url_for('login'))
+
+    events_collection = mongo.db.events
+    event = events_collection.find_one({'_id': ObjectId(event_id)})
+
+    if event:
+        booked_users = event["booked_users"]
+        return render_template('attendance.html', event=event, booked_users=booked_users)
+
+    return 'Event not found'
+
+
+def load_events():
+    events_collection = mongo.db.events
+    events = list(events_collection.find())
+    return events
+
+def load_users():
+    user_collection = mongo.db.users
+    users = list(events_collection.find())
+    return users
+
 
 if __name__ == '__main__':
     app.run(debug=True)

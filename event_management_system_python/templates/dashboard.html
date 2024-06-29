@@ -1,11 +1,30 @@
-{% extends "base.html" %}
-{% block content %}
-<h2>Dashboard</h2>
-<a href="{{ url_for('create_event') }}">Create Event</a>
-<h3>Your Events</h3>
-<ul>
-    {% for event in events %}
-        <li>{{ event.name }} - {{ event.date }}</li>
-    {% endfor %}
-</ul>
-{% endblock %}
+<!-- dashboard.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+</head>
+<body>
+    <h2>Dashboard</h2>
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <ul>
+                {% for message in messages %}
+                    <li>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+
+    <h3>Events</h3>
+    <ul>
+        {% for event in events %}
+            <li><strong>{{ event.name }}</strong> - {{ event.date.strftime('%Y-%m-%d') }}</li>
+        {% endfor %}
+    </ul>
+
+    <a href="{{ url_for('logout') }}">Logout</a>
+</body>
+</html>
