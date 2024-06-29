@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
 from flask_pymongo import PyMongo
 import json
 from bson import ObjectId
@@ -8,7 +8,7 @@ app = Flask(__name__)
 app.secret_key = 'your_secret_key'
 
 
-app.config['MONGO_URI'] = 'mongodb://localhost:27017/event_management'
+app.config['MONGO_URI'] = 'mongodb://localhost:27017/event_manager'
 mongo = PyMongo(app)
 events_collection = mongo.db.events
 users_collection = mongo.db.users
@@ -19,15 +19,15 @@ def index():
     users = load_users()
 
     username = session.get('username')
-    print(username)
+    # print(username)
     user_role = None
 
     if username:
         user = mongo.db['users'].find_one({'username': username})
         if user:
             user_role = user.get('role')
-           
-    print(user_role)
+            # print("---------------------------------")
+    # print(user_role)
 
     return render_template('index.html', events=events, user_role=user_role, username=username)
 
@@ -77,6 +77,19 @@ def create_event():
     if 'username' not in session:
         return redirect(url_for('login'))
 
+    # Check user role
+    username = session.get('username')
+    user_role = None
+    if username:
+        user = mongo.db['users'].find_one({'username': username})
+        if user:
+            user_role = user.get('role')
+
+    # Check if user has 'event_creator' role
+    if user_role != 'event_creator':
+        flash('Unauthorized access. Only event creators can create events.', 'danger')
+        return redirect(url_for('index'))
+
     if request.method == 'POST':
         events_collection = mongo.db.events
         events_collection.insert_one({
@@ -89,6 +102,7 @@ def create_event():
         return redirect(url_for('index'))
 
     return render_template('create_event.html')
+
 
 @app.route('/book_event/<event_id>', methods=['POST'])
 def book_event(event_id):

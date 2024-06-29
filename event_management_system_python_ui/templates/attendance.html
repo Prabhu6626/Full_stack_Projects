@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Attendance</title>
+</head>
+<body>
+    <h2>Event Attendance - {{ event.event_name }}</h2>
+    <p>Event Date: {{ event.event_date }}</p>
+    
+    <h3>Booked Users</h3>
+    <ul>
+    {% for user in booked_users %}
+        <li>{{ user }}</li>
+    {% endfor %}
+    </ul>
+
+    <a href="{{ url_for('index') }}">Back to Home</a>
+</body>
+</html>
