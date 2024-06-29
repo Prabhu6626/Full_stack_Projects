@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome Event Manager</title>
+</head>
+<body>
+    <h1>Welcome to Event Management System</h1>
+    {% if 'username' in session %}
+        <p>Welcome, {{ session['username'] }}! <a href="{{ url_for('logout') }}">Logout</a></p>
+    {% else %}
+        <p>Welcome! <a href="{{ url_for('login') }}">Login</a> or <a href="{{ url_for('register') }}">Register</a></p>
+    {% endif %}
+
+    <h2>Events</h2>
+    <ul>
+    {% for event in events %}
+        <li>{{ event.event_name }} - {{ event.event_date }} - Tickets Left: {{ event.ticket_limit }}
+            {% if 'username' in session and session['username'] == event.creator %}
+                <a href="{{ url_for('attendance', event_id=event._id) }}">Attendance</a>
+            {% else %}
+                <form action="{{ url_for('book_event', event_id=event._id) }}" method="POST">
+                    <button type="submit">Book Ticket</button>
+                </form>
+            {% endif %}
+        </li>
+    {% endfor %}
+    </ul>
+
+    <h2>Create Event</h2>
+    {% if 'username' in session %}
+        <form method="POST" action="{{ url_for('create_event') }}">
+            <label for="event_name">Event Name:</label>
+            <input type="text" id="event_name" name="event_name" required><br><br>
+            
+            <label for="event_date">Event Date:</label>
+            <input type="date" id="event_date" name="event_date" required><br><br>
+
+            <label for="ticket_limit">Ticket Limit:</label>
+            <input type="number" id="ticket_limit" name="ticket_limit" required><br><br>
+
+            <input type="submit" value="Create Event">
+        </form>
+    {% endif %}
+</body>
+</html>

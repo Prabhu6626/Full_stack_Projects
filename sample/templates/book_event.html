@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Book Event</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h2>Book Tickets for {{ event.name }}</h2>
+    <form action="{{ url_for('book_event', event_id=event._id) }}" method="POST">
+        <label for="customer_email">Your Email:</label><br>
+        <input type="email" id="customer_email" name="customer_email" required><br>
+        <label for="tickets_to_book">Tickets to Book:</label><br>
+        <input type="number" id="tickets_to_book" name="tickets_to_book" min="1" max="{{ event.tickets_available }}" required><br>
+        <button type="submit">Book Tickets</button>
+    </form>
+    <a href="{{ url_for('index') }}">Back to Events</a>
+</body>
+</html>
