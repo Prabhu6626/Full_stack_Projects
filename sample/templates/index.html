@@ -8,11 +8,15 @@
 </head>
 <body>
     <h1>Welcome to Event Management System</h1>
-    {% if 'username' in session %}
-        <p>Welcome, {{ session['username'] }}! <a href="{{ url_for('logout') }}">Logout</a></p>
+    {% if username %}
+    {% if user_role == 'event_creator' %}
+        <p>Welcome Event Manager, {{ username }}! <a href="{{ url_for('logout') }}">Logout</a></p>
     {% else %}
-        <p>Welcome! <a href="{{ url_for('login') }}">Login</a> or <a href="{{ url_for('register') }}">Register</a></p>
+        <p>Welcome, {{ username }}! <a href="{{ url_for('logout') }}">Logout</a></p>
     {% endif %}
+{% else %}
+    <p>Welcome! <a href="{{ url_for('login') }}">Login</a> or <a href="{{ url_for('register') }}">Register</a></p>
+{% endif %}
 
     <h2>Events</h2>
     <ul>
