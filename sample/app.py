@@ -8,7 +8,7 @@ app = Flask(__name__)
 app.secret_key = 'your_secret_key'
 
 
-app.config['MONGO_URI'] = 'mongodb://localhost:27017/event_manager'
+app.config['MONGO_URI'] = 'mongodb://localhost:27017/event_manager.users'
 mongo = PyMongo(app)
 events_collection = mongo.db.events
 users_collection = mongo.db.users

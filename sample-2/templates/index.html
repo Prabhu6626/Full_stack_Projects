@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Management</title>
+</head>
+<body>
+    <h1>Welcome to Event Management System</h1>
+    {% if 'username' in session %}
+        <p>Logged in as {{ session['username'] }}</p>
+        <a href="{{ url_for('logout') }}">Logout</a>
+        <h2>Welcome Event Manager</h2>
+        {% if session['role'] == 'event_creator' %}
+            <p><a href="{{ url_for('create_event') }}">Create Event</a></p>
+        {% endif %}
+        <h3>Events</h3>
+        <ul>
+            {% for event in events %}
+            <li>
+                <strong>{{ event.event_name }}</strong> - {{ event.event_date }}
+                <br>
+                <a href="{{ url_for('attendance', event_id=event._id) }}">View Attendance</a>
+                {% if session['role'] == 'customer' %}
+                    | <form action="{{ url_for('book', event_id=event._id) }}" method="POST">
+                        <button type="submit">Book Ticket</button>
+                    </form>
+                {% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p><a href="{{ url_for('register') }}">Register</a> or <a href="{{ url_for('login') }}">Login</a></p>
+    {% endif %}
+</body>
+</html>
