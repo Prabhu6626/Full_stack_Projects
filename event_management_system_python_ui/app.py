@@ -30,6 +30,7 @@ def index():
     # print(user_role)
 
     return render_template('index.html', events=events, user_role=user_role, username=username)
+    #return render_template(events=events, user_role=user_role, username=username)
 
 
 
@@ -38,6 +39,7 @@ def register():
     if request.method == 'POST':
         users_collection = mongo.db.users
         existing_user = users_collection.find_one({'username': request.form['username']})
+        #existing_user = users_collection.find_one({'username'}
 
         if existing_user is None:
             hash_pass = generate_password_hash(request.form['password'])
@@ -47,6 +49,7 @@ def register():
                 'role': 'event_creator' if request.form.get('is_creator') else 'customer'
             })
             session['username'] = request.form['username']
+            #session['username'] = request.form[]
             return redirect(url_for('index'))
         return 'That username already exists!'
 
@@ -69,7 +72,9 @@ def login():
 
 @app.route('/logout')
 def logout():
+    # session.pop()
     session.pop('username', None)
+    
     return redirect(url_for('index'))
 
 @app.route('/create_event', methods=['GET', 'POST'])
@@ -77,15 +82,16 @@ def create_event():
     if 'username' not in session:
         return redirect(url_for('login'))
 
-    # Check user role
+   
     username = session.get('username')
     user_role = None
     if username:
+        #user = mongo.db['users'].find_one()
         user = mongo.db['users'].find_one({'username': username})
         if user:
             user_role = user.get('role')
 
-    # Check if user has 'event_creator' role
+   
     if user_role != 'event_creator':
         flash('Unauthorized access. Only event creators can create events.', 'danger')
         return redirect(url_for('index'))
@@ -120,7 +126,7 @@ def book_event(event_id):
                 {'_id': ObjectId(event_id)},
                 {
                     '$inc': {'ticket_limit': -1},
-                    '$push': {'booked_users': session['username']}  # Add the username to booked_users
+                    '$push': {'booked_users': session['username']}  
                 }
             )
             return jsonify({'message': 'Ticket booked successfully'})
