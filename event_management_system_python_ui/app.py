@@ -72,7 +72,9 @@ def login():
 
 @app.route('/logout')
 def logout():
+    # session.pop()
     session.pop('username', None)
+    
     return redirect(url_for('index'))
 
 @app.route('/create_event', methods=['GET', 'POST'])
@@ -80,15 +82,16 @@ def create_event():
     if 'username' not in session:
         return redirect(url_for('login'))
 
-    # Check user role
+   
     username = session.get('username')
     user_role = None
     if username:
+        #user = mongo.db['users'].find_one()
         user = mongo.db['users'].find_one({'username': username})
         if user:
             user_role = user.get('role')
 
-    # Check if user has 'event_creator' role
+   
     if user_role != 'event_creator':
         flash('Unauthorized access. Only event creators can create events.', 'danger')
         return redirect(url_for('index'))
@@ -123,7 +126,7 @@ def book_event(event_id):
                 {'_id': ObjectId(event_id)},
                 {
                     '$inc': {'ticket_limit': -1},
-                    '$push': {'booked_users': session['username']}  # Add the username to booked_users
+                    '$push': {'booked_users': session['username']}  
                 }
             )
             return jsonify({'message': 'Ticket booked successfully'})
