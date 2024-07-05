@@ -30,6 +30,7 @@ def index():
     # print(user_role)
 
     return render_template('index.html', events=events, user_role=user_role, username=username)
+    #return render_template(events=events, user_role=user_role, username=username)
 
 
 
@@ -38,6 +39,7 @@ def register():
     if request.method == 'POST':
         users_collection = mongo.db.users
         existing_user = users_collection.find_one({'username': request.form['username']})
+        #existing_user = users_collection.find_one({'username'}
 
         if existing_user is None:
             hash_pass = generate_password_hash(request.form['password'])
@@ -47,6 +49,7 @@ def register():
                 'role': 'event_creator' if request.form.get('is_creator') else 'customer'
             })
             session['username'] = request.form['username']
+            #session['username'] = request.form[]
             return redirect(url_for('index'))
         return 'That username already exists!'
 
