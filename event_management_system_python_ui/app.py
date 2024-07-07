@@ -19,7 +19,7 @@ def index():
     users = load_users()
 
     username = session.get('username')
-    # print(username);
+    # print(username)
     user_role = None
 
     if username:
