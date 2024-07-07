@@ -5,21 +5,22 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Welcome Event Manager</title>
-   
+    
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css" rel="stylesheet">
    
     <style>
         .gradient-custom {
-            
-    
-            background: url(backg.jpeg) no-repeat center center fixed;
-            background-size: cover;
+
+            background: #549ae1;
+
+          
+            background: -webkit-linear-gradient(to right, rgb(78, 157, 231), rgb(111, 154, 227));
+
+          
+            background: linear-gradient(to right, rgb(100, 157, 223), rgb(83, 133, 219));
         }
 
-            
-        
 
-        
         body, h1, h2, p, ul, li, form {
             color: white;
             text-align: center;
@@ -43,12 +44,12 @@
     <h1>Welcome to Event Management System</h1>
     {% if username %}
         {% if user_role == 'event_creator' %}
-            <h3>Welcome Event Manager, {{ username }}! <a href="{{ url_for('logout') }}">Logout</a></h3>
+            <p>Welcome Event Manager, {{ username }}! <a href="{{ url_for('logout') }}">Logout</a></p>
         {% else %}
-            <h3>Welcome, {{ username }}! <a href="{{ url_for('logout') }}">Logout</a></h3>
+            <p>Welcome, {{ username }}! <a href="{{ url_for('logout') }}">Logout</a></p>
         {% endif %}
     {% else %}
-        <h3>Welcome! <a href="{{ url_for('login') }}">Login</a> or <a href="{{ url_for('register') }}">Register</a></h3>
+        <p>Welcome! <a href="{{ url_for('login') }}">Login</a> or <a href="{{ url_for('register') }}">Register</a></p>
     {% endif %}
 
     <h2>Events</h2>
@@ -71,7 +72,7 @@
             <div class="col-lg-6">
                 <div class="card bg-dark text-white custom-card">
                     <div class="card-body card-body-custom">
-                        <h3 class="fw-bold mb-2 text-uppercase">Create Event</h3>
+                        <h2 class="fw-bold mb-2 text-uppercase">Create Event</h2>
                         {% if 'username' in session %}
                             <form method="POST" action="{{ url_for('create_event') }}">
                                 <div class="form-group">
@@ -101,7 +102,7 @@
     <br>
     <a href="{{ url_for('index') }}">Back to Home</a>
 
-    
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
